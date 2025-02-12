@@ -1,44 +1,56 @@
-resource "azurerm_public_ip" "example" {
-	resource_group_name = data.azurerm_resource_group.example.name
-	location = data.azurerm_resource_group.example.location
+resource "azurerm_service_plan" "example" {
+	name				= local.app_plan_name
+	resource_group_name	= var.rg_name
+	location			= var.location
 
-	name = "pip-iactemplate-01"
-	sku = "Standard"
-	allocation_method = "Dynamic"
+	os_type				= "Linux"
+	sku_name			= "B1"
 }
 
-resource "azurerm_network_interface" "example" {
-	resource_group_name = data.azurerm_resource_group.example.name
-	location = data.azurerm_resource_group.example.location
+resource "azurerm_linux_web_app" "example" {
+	count = (var.os_type == "linux" ? 1 : 0)
+	depends_on			= [ azurerm_service_plan.example ]
 
-	name = "nic-vmiactemplate01-01"
+	name				= local.app_service_name
+	resource_group_name	= var.rg_name
+	location			= var.location
+	service_plan_id		= azurerm_service_plan.example.id
 
-	ip_configuration {
-		name = "internal"
-		subnet_id = data.azurerm_subnet.example.id
-		private_ip_address_allocation = "Dynamic"
-		public_ip_address_id = azurerm_public_ip.example.id
+	public_network_access_enabled = true
+	https_only = true
+
+	site_config {
+		minimum_tls_version = "1.2"
+		application_stack {
+			node_version = "20-lts"
+		}	
 	}
 }
 
-resource "azurerm_linux_virtual_machine" "example" {
-	resource_group_name = data.azurerm_resource_group.example.name
-	location = data.azurerm_resource_group.example.location
+resource "azurerm_windows_web_app" "example" {
+	count = (var.os_type == "windows" ? 1 : 0)
+	depends_on			= [ azurerm_service_plan.example ]
 
-	name = "vm-iactemplate-01"
-	size = "D2s"
-	admin_username = "avonbied"
-	admin_password = "C0nfirm!"
+	name				= local.app_service_name
+	resource_group_name	= var.rg_name
+	location			= var.location
+	service_plan_id		= azurerm_service_plan.example.id
 
-	os_disk {
-		name = "vmiactemplate01-osdisk"
-		caching = "None"
-		storage_account_type = "Standard_LRS"
-		disk_size_gb = 16
+	public_network_access_enabled = true
+	https_only = true
+
+	site_config {
+		minimum_tls_version = "1.2"
+		application_stack {
+			node_version = "20-lts"
+		}	
 	}
-	network_interface_ids = [ azurerm_network_interface.example.id ]
 }
 
-resource "azurerm_windows_virtual_machine "name" {
-  
+resource "azurerm_app_service_source_control" "example" {
+	app_id					= (var.os_type == "linux" ? azurerm_linux_web_app.example.id : azurerm_windows_web_app.example.id) 
+	repo_url				= var.app_repository
+	branch					= "main"
+	use_manual_integration	= true
+	use_mercurial			= false
 }
