@@ -15,8 +15,16 @@ variable "app_repository" {
 	type = string
 }
 
+variable "location" {
+	type = string
+}
+
+variable "rg_name" {
+	type = string
+}
+
 locals {
-	vm_name = "vm${var.app_name}01"
-	nic_name = "nic-${local.vm_name}-01"
-	pip_name = "pip-${var.app_name}-01"
+	name_pattern = "${var.app_name}-${substr(var.os_type,0,1)}"
+	app_plan_name = "asp-${local.name_pattern}01"
+	app_service_name = "app${local.name_pattern}01"
 }
