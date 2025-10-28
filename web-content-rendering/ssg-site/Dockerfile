@@ -1,11 +1,10 @@
 # syntax=docker/dockerfile:1
 FROM node:lts-alpine AS build
 
-USER node
 WORKDIR /home/node/app
 
 COPY package*.json .
-RUN yarn install --frozen-lockfile --production
+RUN yarn install
 
 COPY . .
 RUN yarn run build
